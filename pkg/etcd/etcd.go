@@ -54,7 +54,7 @@ import (
 )
 
 const (
-	testTimeout          = time.Second * 30
+	testTimeout          = time.Minute * 5
 	manageTickerTime     = time.Second * 15
 	learnerMaxStallTime  = time.Minute * 5
 	memberRemovalTimeout = time.Minute * 1
