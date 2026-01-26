@@ -1,0 +1,49 @@
+name: Beeper Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+  id-token: write
+
+jobs:
+  build-amd64:
+    name: Build Binary (amd64)
+    uses: ./.github/workflows/build-k3s.yaml
+    with:
+      upload-build: true
+
+  create-tagged-release:
+    name: Create tagged release
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write
+      contents: write
+    needs: [build-amd64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Determine Build Version
+        id: version_vars
+        run: |
+          source ./scripts/version.sh
+          {
+            echo "version=${VERSION}"
+          } >> "$GITHUB_OUTPUT"
+      - name: Echo version
+        run:
+          echo ${{ steps.version_vars.outputs.version }}
+      - name: "Download K3s build"
+        uses: actions/download-artifact@v7
+        with:
+          pattern: k3s*
+          path: ./dist/artifacts
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version_vars.outputs.version }}
+          name: ${{ steps.version_vars.outputs.version }}
+          files: ./dist/artifacts/k3s
